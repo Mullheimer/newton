@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newton Room Evaluatie Analyse</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chart.js for interactive charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- ApexCharts for advanced interactive charts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        :root {
+            --primary-color: #002B56;
+            --secondary-color: #EF7918;
+            --accent-color: #88A128;
+            --light-color: #F7A400;
+            --dark-color: #002B56;
+            --shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+            font-family: 'Roboto-light', sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--light-color);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            background-color: var(--primary-color);
+            color: var(--light-color);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+        
+        .header.subheader, .subheader {
+            background-color: var(--light-color);
+            color: var(--light-color);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        
+        h1, h3 {
+            color: var(--light-color);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 28px;
+
+        }
+        
+        .summary {
+            display: flex;
+            justify-content: center; /* Better for wrapped items */
+            margin: 30px 0;
+            flex-wrap: wrap; /* Allow items to wrap */
+            gap: 20px; /* Consistent spacing between items */
+        }
+        
+        .summary-item {
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+            /* Flex properties for the item itself in the grid */
+            flex: 1 1 280px; /* Grow, shrink, basis 280px (adjust as needed) */
+            box-sizing: border-box; /* For predictable sizing with padding */
+
+            /* Flex properties for internal layout of summary-item's content */
+            display: flex; 
+            flex-direction: column;
+            justify-content: flex-start; /* Aligns value and label to the top */
+        }
+        
+        .summary-item:hover {
+            transform: translateY(-5px);
+        }
+        
+        .summary-value {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 0;
+            line-height: 1.2;
+        }
+        
+        .summary-label {
+            font-size: 16px;
+            color: #666;
+        }
+        
+        .feedback {
+            margin-top: 20px;
+        }
+        
+        .feedback-item {
+            background-color: white;
+            border-radius: 4px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .feedback-text {
+            flex-grow: 1;
+        }
+        
+        .feedback-count {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .page-break {
+            page-break-before: always;
+            margin-top: 50px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            border-top: 1px solid #ddd;
+            color: #777;
+        }
+        
+        @media print {
+            .page-break {
+                page-break-before: always;
+            }
+            
+            .card {
+                break-inside: avoid;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+               
+            .summary {
+                flex-direction: column;
+                align-items: center;
+                gap: 15px; /* Add gap for column layout */
+            }
+            
+            .summary-item {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Newton Room statistieken</h1>
+        <p>bereikte leerlingen</p>
+    </div>
+
+    <div class="summary">
+        <div class="summary-item">
+            <div class="summary-value">580</div>
+            <div class="summary-label">Totaal aantal leerlingen</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-value">21</div>
+            <div class="summary-label"><b>Up in the Air with Numbers</b>
+                <p>klas 1 t/m 3 vmbo</p>
+                <p>12 tot 14 jaar oud</p>
+            </div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-value">8</div>
+            <div class="summary-label"><b>Robots en Omtrek</b>
+                <p>groep 7 en ISK</p>
+                <p>11 tot 14 jaar oud</p>
+            </div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-value">47%</div>
+            <div class="summary-label">Bezettingsgraad</div>
+        </div>
+    </div>
+    <div class="page-break"></div>
+    <div class="header">
+        <h1>Newton Room evaluatie</h1>
+        <p>overzicht van bezoekerfeedback</p>
+    </div>
+
+    <div class="summary" id="summary">
+        <!-- Summary items will be inserted here by JavaScript -->
+    </div>
+
+    <div class="dashboard">
+        <div class="card">
+            <h2>beoordeling over tijd</h2>
+            <div class="chart-container">
+                <canvas id="timeSeriesChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>gemiddelde scores</h2>
+            <div class="chart-container" id="metricsChart"></div>
+        </div>
+
+        <div class="card">
+            <h2>gevolgde modules</h2>
+            <div class="chart-container">
+                <canvas id="moduleChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card full-width">
+            <h2>stellingen</h2>
+            <div class="chart-container" id="statementsChart"></div>
+            <p>schaal: 1 = zeer mee oneens, 2 = mee oneens, 3 = neutraal, 4 = mee eens, 5 = helemaal mee eens</p>
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="card full-width">
+        <h2>kwalitatieve feedback</h2>
+        
+        <div class="feedback">
+            <h3>beste aspecten van Newton Room bezoek</h3>
+            <div class="feedback-content" id="bestAspects">
+                <!-- Best aspects will be inserted here by JavaScript -->
+            </div>
+        </div>
+
+        <div class="feedback">
+            <h3>verbeterpunten</h3>
+            <div class="feedback-content" id="improvementAreas">
+                <!-- Improvement areas will be inserted here by JavaScript -->
+            </div>
+        </div>
+    </div>
+    <div class="page-break"></div>
+
+    <div class="header">
+        <h1>Planning 2025-2026</h1>
+        <p>doorgroeien in boekingen & bezoekers en aanbod vergroten</p>
+    </div>
+    
+    <div class="summary">
+        <div class="summary-item">
+            <div class="summary-value">1400</div>
+            <div class="summary-label">Totaal aantal leerlingen</div>
+        </div>
+        
+        <div class="summary-item">
+            <div class="summary-value">85%</div>
+            <div class="summary-label">Totale bezetting Newton Room</div>
+        </div>
+    </div>
+    <div class="subheader">
+        <h2 style="margin: 0; font-size: 24px;">Boekingen</h2>
+    </div>
+    <div class="summary">
+    <div class="summary-item">
+        <div class="summary-value">70</div>
+        <div class="summary-label">Totaal</div>
+    </div>
+        <div class="summary-item">
+            <div class="summary-value">7</div>
+            <div class="summary-label">Scholen buitenom STO</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-value">10</div>
+            <div class="summary-label">havo / vwo klassen <br> Up in the Air</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-value">10</div>
+            <div class="summary-label">Basisscholen <br> Robots en Omtrek</div>
+        </div>
+    </div>
+    <div class="header subheader">
+        <h2>Groei in aanbod</h2>
+        <!-- <p>doorgroeien in boekingen & bezoekers en aanbod vergroten</p> -->
+    </div>
+    <div class="summary">
+        <div class="summary-item">
+            <div class="summary-value">3</div>
+            <div class="summary-label">Dagen open</div>
+        </div>
+        <div class="divider" style="align-self: center; font-size: 24px; color: var(#002B56); margin: 0 10px;">
+            of
+        </div>
+        <div class="summary-item">
+            <div class="summary-value">3</div>
+            <div class="summary-label">Modules in het aanbod</div>
+        </div>
+
+    </div>
+
+    <div class="footer">
+        <p>Newton Room evaluatie rapport • gegenereerd op 11-04-2025</p>
+    </div>
+
+    <script>
+        // Embedded data - no need for fetch
+        const data = {"summary": {"average_experience": 8.2, "average_recommendation": 8.5, "total_evaluations": 8}, "time_series": [{"date": "2024-10-18", "rating": 7.0}, {"date": "2024-11-21", "rating": 7.0}, {"date": "2024-11-24", "rating": 8.0}, {"date": "2024-12-09", "rating": 9.0}, {"date": "2025-01-28", "rating": 9.0}, {"date": "2025-03-19", "rating": 8.0}, {"date": "2025-03-29", "rating": 9.0}, {"date": "2025-04-03", "rating": 9.0}], "metrics": [{"name": "Algemene Ervaring", "value": 8.2}, {"name": "Aanbevelingsscore", "value": 8.5}, {"name": "Gemak van Boeken", "value": 8.2}, {"name": "Kwaliteit van Onderwijs", "value": 8.1}], "modules": [{"name": "Up in the Air with Numbers", "value": 6}, {"name": "Robots and Circumference", "value": 2}], "statements": [{"statement": "De leerlingen gebruikten in de Newton Room speciale apparatuur waar ze op school geen toegang toe hebben.", "value": 4.8}, {"statement": "De onderwerpen die in de Newton-module worden gegeven, sluiten aan bij het curriculum dat ik geef.", "value": 4.4}, {"statement": "De activiteiten in de Newton module was op het juiste niveau voor mijn studenten.", "value": 3.8}, {"statement": "Dankzij de module konden mijn leerlingen zien hoe wetenschap en wiskunde in de echte wereld kunnen worden toegepast.", "value": 4.6}, {"statement": "Het bezoek aan de Newton Room verhoogde de interesse van mijn student in STEM-onderwerpen.", "value": 4.3}, {"statement": "Het werken met de Newton module gaf mij ideeën om te gebruiken in mijn eigen lesgeven.", "value": 4.2}, {"statement": "Een bezoek aan de Newton Room was een geweldige leerervaring voor mijn leerlingen.", "value": 4.5}], "best_aspects": [{"text": "de ruimte zag er inspirerend en mooi uit.", "count": 1}, {"text": "leerlingen denken vanuit spelletjes dat vliegen zo gebeurd is, maar zien de voorbereiding niet. dit vind ik een heel belangrijk aspect", "count": 1}, {"text": "leuke begeleiding", "count": 1}, {"text": "de docent was erg vriendelijk, gaf prima instructie en begeleiding was top.\n\nwerken met robots en de rondleiding waren zeer interessant en de leerlingen hebben het goed naar hun zin gehad.\n\njammer dat de tijd snel voorbij was zodat we de simulatie niet konden doen.", "count": 1}, {"text": "de omgeving, de lesmaterialen en het werken met de robots.", "count": 1}, {"text": "vliegen met de simulator en het bezoek aan de hangar.", "count": 3}], "improvement_areas": [{"text": "De opdrachten aanpassen aan niveau", "count": 5}]};
+        
+        // Initialize all charts once the page is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initSummary(data.summary);
+            initTimeSeriesChart(data.time_series);
+            initMetricsChart(data.metrics);
+            initModuleChart(data.modules);
+            initStatementsChart(data.statements);
+            displayQualitativeFeedback(data.best_aspects, 'bestAspects');
+            displayQualitativeFeedback(data.improvement_areas, 'improvementAreas');
+        });
+            
+        // Initialize summary section
+        function initSummary(summary) {
+            const summaryEl = document.getElementById('summary');
+            
+            // Clear any existing content
+            summaryEl.innerHTML = '';
+            
+            // Create summary items
+            const items = [
+                { value: summary.average_experience, label: 'Gemiddelde Ervaring (1-10)' },
+                { value: summary.average_recommendation, label: 'Aanbevelingsscore (1-10)' },
+                { value: summary.total_evaluations, label: 'Aantal Evaluaties' }
+            ];
+            
+            items.forEach(item => {
+                const itemEl = document.createElement('div');
+                itemEl.className = 'summary-item';
+                
+                const valueEl = document.createElement('div');
+                valueEl.className = 'summary-value';
+                valueEl.textContent = item.value;
+                        
+                const labelEl = document.createElement('div');
+                labelEl.className = 'summary-label';
+                labelEl.textContent = item.label;
+                    
+                itemEl.appendChild(valueEl);
+                itemEl.appendChild(labelEl);
+                summaryEl.appendChild(itemEl);
+            });
+        }
+        
+        // Initialize time series chart
+        function initTimeSeriesChart(timeSeriesData) {
+            if (!timeSeriesData || timeSeriesData.length === 0) return;
+            
+            const ctx = document.getElementById('timeSeriesChart').getContext('2d');
+            
+            // Extract dates and ratings
+            const dates = timeSeriesData.map(item => item.date);
+            const ratings = timeSeriesData.map(item => item.rating);
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Algemene Ervaring',
+                        data: ratings,
+                        borderColor: '#005288',
+                        backgroundColor: 'rgba(0, 82, 136, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.3,
+                        pointBackgroundColor: '#005288',
+                        pointBorderColor: '#fff',
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 10,
+                            ticks: {
+                                stepSize: 2
+                            },
+                            title: {
+                                display: true,
+                                text: 'Beoordeling (1-10)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Datum'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                            titleFont: {
+                                size: 30
+                            },
+                            bodyFont: {
+                                size: 30
+                            },
+                            padding: 10
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Initialize metrics chart
+        function initMetricsChart(metricsData) {
+            if (!metricsData || metricsData.length === 0) return;
+            
+            const chartElement = document.getElementById('metricsChart');
+            
+            const options = {
+                series: [{
+                    name: 'Beoordeling',
+                    data: metricsData.map(item => item.value)
+                }],
+                chart: {
+                    height: 300,
+                    type: 'bar',
+                    toolbar: {
+                        show: false
+                    }
+                },
+                plotOptions: {
+                    bar: {
+                        distributed: true,
+                        borderRadius: 5,
+                        dataLabels: {
+                            position: 'top'
+                        }
+                    }
+                },
+                // colors: ['#3498db', '#2ecc71', '#e74c3c', '#f39c12'],
+                colors: ['var(--primary-color)', 'var(--secondary-color)', 'var(--accent-color)', 'var(--light-color)'],
+                dataLabels: {
+                    enabled: true,
+                    formatter: function(val) {
+                        return val.toFixed(1);
+                    },
+                    offsetY: -20,
+                    style: {
+                        fontSize: '12px',
+                        colors: ["#333"]
+                    }
+                },
+                xaxis: {
+                    categories: metricsData.map(item => item.name),
+                    position: 'bottom',
+                    axisBorder: {
+                        show: false
+                    },
+                    axisTicks: {
+                        show: false
+                    }
+                },
+                yaxis: {
+                    min: 0,
+                    max: 10,
+                    labels: {
+                        formatter: function(val) {
+                            return val.toFixed(0);
+                        }
+                    },
+                    title: {
+                        text: 'Beoordeling (1-10)'
+                    }
+                },
+                grid: {
+                    borderColor: '#f1f1f1'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `${label}: ${value} (${percentage}%)`;
+                        }
+                    },
+                    titleFont: {
+                        size: 30
+                    },
+                    bodyFont: {
+                        size: 30
+                    }
+                }
+            };
+            
+            const chart = new ApexCharts(chartElement, options);
+            chart.render();
+        }
+        
+        // Initialize module chart
+        function initModuleChart(moduleData) {
+            if (!moduleData || moduleData.length === 0) return;
+            
+            const ctx = document.getElementById('moduleChart').getContext('2d');
+            
+            // Extract module names and counts
+            const names = moduleData.map(item => item.name);
+            const counts = moduleData.map(item => item.value);
+            
+            // // Define colors
+            // const backgroundColors = [
+            //     'rgba(52, 152, 219, 0.8)',
+            //     'rgba(46, 204, 113, 0.8)',
+            //     'rgba(231, 76, 60, 0.8)',
+            //     'rgba(243, 156, 18, 0.8)',
+            //     'rgba(155, 89, 182, 0.8)'
+            // ];
+
+            const backgroundColors = [
+            '#002B56', // Primary color
+            '#EF7918', // Secondary color
+            '#88A128', // Accent color
+            '#F7A400', // Light color
+            'rgba(155, 89, 182, 0.8)' // Additional color
+            ];
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: names,
+                    datasets: [{
+                        data: counts,
+                        backgroundColor: backgroundColors,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            },
+                            titleFont: {
+                                size: 30
+                            },
+                            bodyFont: {
+                                size: 30
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Initialize statements chart
+        function initStatementsChart(statementsData) {
+            if (!statementsData || statementsData.length === 0) return;
+            
+            const chartElement = document.getElementById('statementsChart');
+            
+            const options = {
+                series: [{
+                    name: 'overeenkomst',
+                    data: statementsData.map(item => item.value)
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 450,
+                    toolbar: {
+                        show: false
+                    }
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: true,
+                        distributed: false,
+                        barHeight: '70%',
+                        borderRadius: 5
+                    }
+                },
+                colors: ['#002B56'],
+                dataLabels: {
+                    enabled: true,
+                    formatter: function(val) {
+                        return val.toFixed(1);
+                    },
+                    textAnchor: 'start',
+                    style: {
+                        colors: ['#fff']
+                    },
+                    offsetX: 5
+                },
+                xaxis: {
+                    categories: statementsData.map(item => item.statement),
+                    labels: {
+                        formatter: function(val) {
+                            return val.toFixed(1);
+                        }
+                    },
+                    min: 0,
+                    max: 5,
+                    title: {
+                        text: 'overeenkomst (1-5)'
+                    }
+                },
+                yaxis: {
+                    labels: {
+                        maxWidth: 350
+                    }
+                },
+                tooltip: {
+                    theme: 'dark',
+                    x: {
+                        show: false
+                    },
+                    y: {
+                        title: {
+                            formatter: function(seriesName, { dataPointIndex }) {
+                                return statementsData[dataPointIndex].statement;
+                            }
+                        }
+                    },
+                    style: {
+                        fontSize: '20px'
+                    }
+                }
+            };
+            
+            const chart = new ApexCharts(chartElement, options);
+            chart.render();
+        }
+        
+        // Display qualitative feedback
+        function displayQualitativeFeedback(feedbackData, elementId) {
+            const container = document.getElementById(elementId);
+            
+            // Clear any existing content
+            container.innerHTML = '';
+            
+            if (!feedbackData || feedbackData.length === 0) {
+                container.innerHTML = '<p>Geen significante feedback gemeld.</p>';
+                return;
+            }
+            
+            // Create feedback items
+            feedbackData.forEach(item => {
+                const itemEl = document.createElement('div');
+                itemEl.className = 'feedback-item';
+                
+                const textEl = document.createElement('div');
+                textEl.className = 'feedback-text';
+                textEl.textContent = item.text;
+                   
+                const countEl = document.createElement('div');
+                countEl.className = 'feedback-count';
+                countEl.textContent = item.count;
+                                
+                itemEl.appendChild(textEl);
+                itemEl.appendChild(countEl);
+                container.appendChild(itemEl);
+            });
+        }
+    </script>
+
+</body>
+</html>
